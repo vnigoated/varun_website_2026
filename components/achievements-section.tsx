@@ -114,7 +114,6 @@ const achievementSlides: Record<ChatLanguage, AchievementSlide[]> = {
 }
 
 const copy: Record<ChatLanguage, {
-  sectionLabel: string
   heading: string
   description: string
   highlightsLabel: string
@@ -122,20 +121,16 @@ const copy: Record<ChatLanguage, {
   paperButton: string
 }> = {
   en: {
-    sectionLabel: 'Achievements',
-    heading: 'Recognition, in motion',
-    description:
-      'Selected wins and publications are presented as a rotating gallery so the section stays compact, readable, and easy to scan.',
+    heading: 'Trophy Cabinet',
+    description: '',
     highlightsLabel: 'Selected highlights',
     highlightsDescription:
-      'Click through the carousel to inspect each recognition. The research paper remains linked below for direct access.',
+      'Click through the carousel to inspect each highlight. The research paper remains linked below for direct access.',
     paperButton: 'Open paper',
   },
   de: {
-    sectionLabel: 'Auszeichnungen',
-    heading: 'Anerkennung in Bewegung',
-    description:
-      'Ausgewählte Erfolge und Veröffentlichungen werden als rotierende Galerie dargestellt, damit der Abschnitt kompakt, lesbar und schnell erfassbar bleibt.',
+    heading: 'Trophäenschrank',
+    description: '',
     highlightsLabel: 'Ausgewählte Highlights',
     highlightsDescription:
       'Klicke dich durch das Karussell, um jede Auszeichnung anzusehen. Die Forschungsarbeit ist unten direkt verlinkt.',
@@ -192,7 +187,7 @@ export function AchievementsSection() {
       achievementSlides[language].map((achievement) => ({
         quote: `${achievement.description} ${achievement.impact}`,
         name: achievement.title,
-        designation: `${achievement.year} • ${language === 'en' ? 'Recognition' : 'Anerkennung'}`,
+        designation: `${achievement.year} • ${language === 'en' ? 'Trophy Cabinet' : 'Trophäenschrank'}`,
         src: achievement.image,
       })),
     [language],
@@ -218,14 +213,6 @@ export function AchievementsSection() {
         >
           <motion.div variants={fadeInUp} className="mb-12 text-center">
             <TextReveal
-              as="span"
-              className="inline-block text-sm uppercase tracking-[0.3em] text-[#8c5f3a] font-medium"
-              delay={0.05}
-              stagger={0.04}
-            >
-              {activeCopy.sectionLabel}
-            </TextReveal>
-            <TextReveal
               as="h2"
               className="mt-4 font-serif text-4xl md:text-5xl font-semibold text-[#3f2f24]"
               delay={0.08}
@@ -233,14 +220,16 @@ export function AchievementsSection() {
             >
               {activeCopy.heading}
             </TextReveal>
-            <TextReveal
-              as="p"
-              className="mt-4 max-w-2xl mx-auto text-[#705c4b]"
-              delay={0.12}
-              stagger={0.025}
-            >
-              {activeCopy.description}
-            </TextReveal>
+            {activeCopy.description ? (
+              <TextReveal
+                as="p"
+                className="mt-4 max-w-2xl mx-auto text-[#705c4b]"
+                delay={0.12}
+                stagger={0.025}
+              >
+                {activeCopy.description}
+              </TextReveal>
+            ) : null}
           </motion.div>
 
           <div className="mx-auto max-w-7xl rounded-[2.5rem] border border-[#dcc8b2] bg-white/50 p-4 shadow-2xl shadow-[#8c5f3a]/10 backdrop-blur-sm md:p-6">
