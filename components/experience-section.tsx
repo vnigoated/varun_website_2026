@@ -320,7 +320,6 @@ export function ExperienceSection() {
               {compactExperiences.map((experience) => (
                 <motion.div
                   key={experience.id}
-                  layout
                   className="lg:col-span-6"
                   layout="position"
                 >
