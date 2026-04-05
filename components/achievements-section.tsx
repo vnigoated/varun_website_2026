@@ -6,10 +6,6 @@ import { ArrowUpRight } from 'lucide-react'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { TextReveal } from '@/components/text-reveal'
 import { CircularTestimonials } from '@/components/ui/circular-testimonials'
-import ibmHackathonImage from '../upload/ibm_hackathon.png'
-import codeathonImage from '../upload/codathon.jpg'
-import documentPaperImage from '../upload/document_paper.png'
-import voisHackathonImage from '../upload/vois_hackathon.jpeg'
 
 type ChatLanguage = 'en' | 'de'
 
@@ -33,7 +29,7 @@ const achievementSlides: Record<ChatLanguage, AchievementSlide[]> = {
       impact:
         'Delivered a production-lean prototype that proved measurable value in enterprise information retrieval.',
       year: '2025',
-      image: ibmHackathonImage.src,
+      image: '/ibm_hackathon.png',
     },
     {
       title: 'Codeathon ML Winner',
@@ -41,7 +37,7 @@ const achievementSlides: Record<ChatLanguage, AchievementSlide[]> = {
         'Won the machine learning track with a real-time anomaly detection system for IoT device streams.',
       impact: 'Improved anomaly detection speed while preserving model precision in live event flows.',
       year: '2025',
-      image: codeathonImage.src,
+      image: '/codathon.jpg',
     },
     {
       title: 'VOIS Marathon Winner',
@@ -49,7 +45,7 @@ const achievementSlides: Record<ChatLanguage, AchievementSlide[]> = {
         'Built an accessibility-focused solution that helped visually impaired users navigate digital interfaces.',
       impact: 'Improved usability and task completion confidence in assistive navigation scenarios.',
       year: '2024',
-      image: voisHackathonImage.src,
+      image: '/vois_hackathon.jpeg',
     },
     {
       title: 'Document Summarizer: A Machine Learning Approach to PDF Summarization',
@@ -58,7 +54,7 @@ const achievementSlides: Record<ChatLanguage, AchievementSlide[]> = {
       impact:
         'Demonstrated practical summarization performance and structured pipeline design for real-world document processing.',
       year: '2025',
-      image: documentPaperImage.src,
+      image: '/document_paper.png',
     },
     {
       title: 'AI Crowd System - 200K+ Users',
@@ -77,7 +73,7 @@ const achievementSlides: Record<ChatLanguage, AchievementSlide[]> = {
       impact:
         'Lieferte einen produktionsnahen Prototypen, der messbaren Mehrwert für die Enterprise-Informationssuche zeigte.',
       year: '2025',
-      image: ibmHackathonImage.src,
+      image: '/ibm_hackathon.png',
     },
     {
       title: 'Codeathon ML-Sieger',
@@ -85,7 +81,7 @@ const achievementSlides: Record<ChatLanguage, AchievementSlide[]> = {
         'Gewann die Machine-Learning-Kategorie mit einem Echtzeit-Anomalieerkennungssystem für IoT-Gerätestreams.',
       impact: 'Verbesserte die Erkennungsgeschwindigkeit bei gleichbleibender Modellpräzision in Live-Event-Flows.',
       year: '2025',
-      image: codeathonImage.src,
+      image: '/codathon.jpg',
     },
     {
       title: 'VOIS Marathon-Sieger',
@@ -94,7 +90,7 @@ const achievementSlides: Record<ChatLanguage, AchievementSlide[]> = {
       impact:
         'Steigerte die Benutzerfreundlichkeit und das Vertrauen bei assistiven Navigationsszenarien.',
       year: '2024',
-      image: voisHackathonImage.src,
+      image: '/vois_hackathon.jpeg',
     },
     {
       title: 'Dokumentzusammenfassung: Ein Machine-Learning-Ansatz zur PDF-Zusammenfassung',
@@ -103,7 +99,7 @@ const achievementSlides: Record<ChatLanguage, AchievementSlide[]> = {
       impact:
         'Zeigte praxisnahe Zusammenfassungsleistung und eine strukturierte Pipeline für reale Dokumentenverarbeitung.',
       year: '2025',
-      image: documentPaperImage.src,
+      image: '/document_paper.png',
     },
     {
       title: 'AI Crowd System - 200K+ Nutzer',
