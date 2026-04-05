@@ -1,153 +1,102 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import { motion, useInView } from 'framer-motion'
-import { useRef } from 'react'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
-import { Code2, Layers, Brain, Database, Shield } from 'lucide-react'
 import { TextReveal } from '@/components/text-reveal'
-import { Reveal } from '@/components/reveal'
+import { StaggerTestimonials } from '@/components/ui/stagger-testimonials'
 
-const skillCategories = [
+type ChatLanguage = 'en' | 'de'
+
+const LANGUAGE_STORAGE_KEY = 'portfolio-language'
+const LANGUAGE_CHANGE_EVENT = 'portfolio-language-change'
+
+const content: Record<
+  ChatLanguage,
   {
-    title: 'Languages',
-    icon: Code2,
-    skills: [
-      { name: 'Python', level: 95 },
-      { name: 'TypeScript', level: 90 },
-      { name: 'JavaScript', level: 90 },
-      { name: 'Go', level: 70 },
-      { name: 'Rust', level: 60 },
-    ]
-  },
-  {
-    title: 'Frameworks',
-    icon: Layers,
-    skills: [
-      { name: 'React/Next.js', level: 95 },
-      { name: 'Node.js', level: 85 },
-      { name: 'FastAPI', level: 90 },
-      { name: 'Django', level: 75 },
-      { name: 'Express', level: 80 },
-    ]
-  },
-  {
-    title: 'AI/ML',
-    icon: Brain,
-    skills: [
-      { name: 'TensorFlow', level: 85 },
-      { name: 'PyTorch', level: 80 },
-      { name: 'LangChain', level: 90 },
-      { name: 'OpenAI/GPT', level: 95 },
-      { name: 'Computer Vision', level: 75 },
-    ]
-  },
-  {
-    title: 'Databases',
-    icon: Database,
-    skills: [
-      { name: 'PostgreSQL', level: 90 },
-      { name: 'MongoDB', level: 85 },
-      { name: 'Redis', level: 80 },
-      { name: 'Pinecone', level: 85 },
-      { name: 'Supabase', level: 90 },
-    ]
-  },
-  {
-    title: 'Cybersecurity',
-    icon: Shield,
-    skills: [
-      { name: 'Pen Testing', level: 80 },
-      { name: 'Network Security', level: 75 },
-      { name: 'OWASP', level: 85 },
-      { name: 'Cryptography', level: 70 },
-      { name: 'Security Auditing', level: 75 },
-    ]
+    sectionLabel: string
+    heading: string
+    description: string
   }
-]
-
-function SkillBar({ name, level, delay }: { name: string; level: number; delay: number }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const isInView = useInView(ref, { once: true })
-
-  return (
-    <div ref={ref} className="space-y-2">
-      <div className="flex justify-between items-center">
-        <span className="text-sm font-medium text-foreground">{name}</span>
-        <span className="text-xs text-muted-foreground">{level}%</span>
-      </div>
-      <div className="h-2 bg-secondary rounded-full overflow-hidden">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={isInView ? { width: `${level}%` } : { width: 0 }}
-          transition={{ duration: 1, delay, ease: [0.22, 1, 0.36, 1] }}
-          className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full"
-        />
-      </div>
-    </div>
-  )
+> = {
+  en: {
+    sectionLabel: 'Skills',
+    heading: 'Skill Signals',
+    description:
+      'A staggered, card-first interaction that reflects how I deliver engineering outcomes across AI, product, and security.',
+  },
+  de: {
+    sectionLabel: 'Fähigkeiten',
+    heading: 'Skill-Signale',
+    description:
+      'Eine gestaffelte, kartenbasierte Interaktion, die zeigt, wie ich Engineering-Ergebnisse über KI, Produkt und Security liefere.',
+  },
 }
 
 export function SkillsSection() {
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
+  const [skillsLanguage, setSkillsLanguage] = useState<ChatLanguage>('en')
+
+  useEffect(() => {
+    const savedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY)
+    if (savedLanguage === 'en' || savedLanguage === 'de') {
+      setSkillsLanguage(savedLanguage)
+    }
+
+    const handleLanguageEvent = (event: Event) => {
+      const customEvent = event as CustomEvent<{ language?: ChatLanguage }>
+      const nextLanguage = customEvent.detail?.language
+      if (nextLanguage === 'en' || nextLanguage === 'de') {
+        setSkillsLanguage(nextLanguage)
+      }
+    }
+
+    window.addEventListener(LANGUAGE_CHANGE_EVENT, handleLanguageEvent as EventListener)
+    return () => {
+      window.removeEventListener(LANGUAGE_CHANGE_EVENT, handleLanguageEvent as EventListener)
+    }
+  }, [])
+
+  const copy = content[skillsLanguage]
 
   return (
-    <section
-      ref={ref}
-      id="skills"
-      className="py-32 bg-secondary/30 relative overflow-hidden scroll-mt-28"
-    >
-      <div className="container mx-auto px-6">
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          animate={isInView ? 'visible' : 'hidden'}
-        >
-          {/* Section header */}
-          <motion.div variants={fadeInUp} className="text-center mb-16">
-            <TextReveal as="span" className="text-sm uppercase tracking-widest text-primary font-medium inline-block" delay={0.05} stagger={0.04}>
-              Skills
+    <section ref={ref} id="skills" className="relative overflow-hidden bg-[#f6f2ec] py-28 scroll-mt-28">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(152,107,71,0.1),transparent_42%),radial-gradient(circle_at_bottom_left,rgba(220,201,182,0.38),transparent_38%)]" />
+      </div>
+
+      <div className="container relative mx-auto px-6">
+        <motion.div variants={staggerContainer} initial="hidden" animate={isInView ? 'visible' : 'hidden'}>
+          <motion.div variants={fadeInUp} className="mx-auto mb-14 max-w-3xl text-center">
+            <TextReveal
+              as="span"
+              className="inline-block text-sm font-medium uppercase tracking-[0.28em] text-primary"
+              delay={0.05}
+              stagger={0.04}
+            >
+              {copy.sectionLabel}
             </TextReveal>
-            <TextReveal as="h2" className="text-4xl md:text-5xl font-bold text-foreground mt-4" delay={0.08} stagger={0.06}>
-              Technical Expertise
+            <TextReveal
+              as="h2"
+              className="mt-4 text-4xl font-bold text-foreground md:text-5xl"
+              delay={0.08}
+              stagger={0.06}
+            >
+              {copy.heading}
             </TextReveal>
-            <TextReveal as="p" className="text-muted-foreground mt-4 max-w-xl mx-auto" delay={0.12} stagger={0.025}>
-              A comprehensive toolkit for building intelligent, scalable, and secure applications.
+            <TextReveal
+              as="p"
+              className="mx-auto mt-4 max-w-2xl text-muted-foreground"
+              delay={0.12}
+              stagger={0.025}
+            >
+              {copy.description}
             </TextReveal>
           </motion.div>
 
-          {/* Skills grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {skillCategories.map((category, categoryIndex) => (
-              <Reveal key={category.title} delay={categoryIndex * 0.08} className="h-full">
-                <motion.div
-                  variants={fadeInUp}
-                  custom={categoryIndex}
-                  whileHover={{ y: -4 }}
-                  className="p-8 bg-card rounded-3xl border border-border shadow-sm hover:shadow-lg transition-shadow duration-300"
-                >
-                  {/* Category header */}
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-3 bg-primary/10 rounded-2xl">
-                      <category.icon className="w-6 h-6 text-primary" />
-                    </div>
-                    <h3 className="text-xl font-bold text-foreground">{category.title}</h3>
-                  </div>
-
-                  {/* Skills */}
-                  <div className="space-y-4">
-                    {category.skills.map((skill, skillIndex) => (
-                      <SkillBar
-                        key={skill.name}
-                        name={skill.name}
-                        level={skill.level}
-                        delay={categoryIndex * 0.1 + skillIndex * 0.1}
-                      />
-                    ))}
-                  </div>
-                </motion.div>
-              </Reveal>
-            ))}
+          <div className="rounded-[2rem] border border-[#dbcbb9] bg-white/75 p-4 shadow-sm backdrop-blur-sm md:p-6 lg:p-8">
+            <StaggerTestimonials />
           </div>
         </motion.div>
       </div>

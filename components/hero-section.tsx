@@ -25,6 +25,8 @@ const chatbotI18n: Record<
   ChatLanguage,
   {
     intro: string
+    educationQuestion: string
+    educationAnswer: string
     guide: string
     online: string
     placeholder: string
@@ -35,6 +37,9 @@ const chatbotI18n: Record<
 > = {
   en: {
     intro: "Hi, I am Varun's AI assistant. Ask me anything about his profile, projects, and experience.",
+    educationQuestion: 'What is your education?',
+    educationAnswer:
+      'I am currently pursuing two degrees from Vishwakarma University, Pune, India.\n• B.Tech in Artificial Intelligence with a CGPA of 8.8 (Aug 2023 - May 2027)\n• Honors in Cyber Security with a CGPA of 9.0 (Aug 2024 - May 2027)',
     guide: 'Portfolio Guide',
     online: 'Online',
     placeholder: 'Ask about projects, stack, achievements...',
@@ -44,6 +49,9 @@ const chatbotI18n: Record<
   },
   de: {
     intro: 'Hallo, ich bin Varuns KI-Assistent. Frag mich alles zu seinem Profil, seinen Projekten und seiner Erfahrung.',
+    educationQuestion: 'Wie ist deine Ausbildung?',
+    educationAnswer:
+      'Ich verfolge derzeit zwei Studiengänge an der Vishwakarma University in Pune, Indien.\n• B.Tech in Artificial Intelligence mit einem CGPA von 8.8 (Aug 2023 - Mai 2027)\n• Honors in Cyber Security mit einem CGPA von 9.0 (Aug 2024 - Mai 2027)',
     guide: 'Portfolio-Assistent',
     online: 'Online',
     placeholder: 'Frage nach Projekten, Stack, Erfolgen...',
@@ -96,6 +104,16 @@ function createInitialChatMessages(language: ChatLanguage): ChatMessage[] {
       id: `intro-${language}`,
       role: 'assistant' as const,
       text: chatbotI18n[language].intro,
+    },
+    {
+      id: `education-question-${language}`,
+      role: 'user' as const,
+      text: chatbotI18n[language].educationQuestion,
+    },
+    {
+      id: `education-answer-${language}`,
+      role: 'assistant' as const,
+      text: chatbotI18n[language].educationAnswer,
     },
   ]
 }

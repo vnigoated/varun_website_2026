@@ -91,15 +91,6 @@ export function Navbar() {
       )}
     >
       <nav className="container mx-auto px-6 relative flex items-center justify-between">
-        <motion.a
-          href="#"
-          className="text-xl font-semibold text-foreground"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          VI
-        </motion.a>
-
         {/* Desktop Navigation */}
         <ul className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
           {navLinks.map((link, index) => (

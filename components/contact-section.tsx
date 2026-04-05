@@ -1,15 +1,15 @@
 'use client'
 
 import { motion, useInView } from 'framer-motion'
-import { useRef, useState } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import { fadeInUp, staggerContainer, hoverScale, tapScale } from '@/lib/animations'
 import { Mail, MapPin, Phone, Send, Github, Linkedin, Twitter, CheckCircle, AlertCircle } from 'lucide-react'
 import { TextReveal } from '@/components/text-reveal'
 import { Reveal } from '@/components/reveal'
 
 const socialLinks = [
-  { name: 'GitHub', icon: Github, href: 'https://github.com' },
-  { name: 'LinkedIn', icon: Linkedin, href: 'https://linkedin.com' },
+  { name: 'GitHub', icon: Github, href: 'https://github.com/vnigoated' },
+  { name: 'LinkedIn', icon: Linkedin, href: 'https://www.linkedin.com/in/varun-inamdar03/' },
   { name: 'Twitter', icon: Twitter, href: 'https://twitter.com' },
 ]
 
@@ -18,20 +18,52 @@ export function ContactSection() {
   const isInView = useInView(ref, { once: true, margin: '-100px' })
   const [formState, setFormState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [formData, setFormData] = useState({ name: '', email: '', message: '' })
+  const [statusMessage, setStatusMessage] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setFormState('loading')
-    
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    // Randomly succeed or fail for demo
-    setFormState('success')
-    setFormData({ name: '', email: '', message: '' })
-    
-    // Reset after 3 seconds
-    setTimeout(() => setFormState('idle'), 3000)
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        setFormState('success')
+        setStatusMessage('Message sent successfully.')
+        setFormData({ name: '', email: '', message: '' })
+        setTimeout(() => {
+          setFormState('idle')
+          setStatusMessage('')
+        }, 3000)
+        return
+      }
+
+      if (result?.reason === 'smtp-not-configured' && result?.mailtoUrl) {
+        window.location.assign(result.mailtoUrl)
+        setFormState('success')
+        setStatusMessage('Email app opened with your message.')
+        setFormData({ name: '', email: '', message: '' })
+        setTimeout(() => {
+          setFormState('idle')
+          setStatusMessage('')
+        }, 3000)
+        return
+      }
+
+      setFormState('error')
+      setStatusMessage(result?.error || 'Something went wrong. Please try again.')
+    } catch {
+      setFormState('error')
+      setStatusMessage('Could not reach the contact endpoint.')
+    }
   }
 
   return (
@@ -86,7 +118,7 @@ export function ContactSection() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Email</p>
-                      <p className="font-medium text-foreground">varun@example.com</p>
+                      <p className="font-medium text-foreground">vninamdar03@gmail.com</p>
                     </div>
                   </motion.div>
                 </Reveal>
@@ -101,7 +133,7 @@ export function ContactSection() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Phone</p>
-                      <p className="font-medium text-foreground">+91 98765 43210</p>
+                      <p className="font-medium text-foreground">+91 75172 77551</p>
                     </div>
                   </motion.div>
                 </Reveal>
@@ -116,7 +148,7 @@ export function ContactSection() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Location</p>
-                      <p className="font-medium text-foreground">Mumbai, India</p>
+                      <p className="font-medium text-foreground">India</p>
                     </div>
                   </motion.div>
                 </Reveal>
@@ -231,6 +263,11 @@ export function ContactSection() {
                       </>
                     )}
                   </motion.button>
+                    {statusMessage && (
+                      <p className={`text-sm ${formState === 'error' ? 'text-destructive' : 'text-muted-foreground'} text-center`} aria-live="polite">
+                        {statusMessage}
+                      </p>
+                    )}
                   </div>
                 </form>
               </motion.div>
