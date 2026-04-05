@@ -68,7 +68,7 @@ const projects = [
     tags: ['Yjs', 'Websockets', 'Tiptap', 'AWS EC2', 'LLM'],
     icon: Code2,
     featured: true,
-    videoUrl: 'https://ik.imagekit.io/ig88d0ddi/Main.mp4?updatedAt=1775384468979',
+    videoUrl: 'https://ik.imagekit.io/yyg3xivug/Main.mp4',
     videoAutoplay: true,
     liveUrl: 'https://coedit.sparkstudio.co.in/',
     githubUrl: 'https://github.com/vnigoated/coedit'
