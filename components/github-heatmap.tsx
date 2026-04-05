@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { useTheme } from 'next-themes'
 import { addDays, format, startOfYear, endOfYear } from 'date-fns'
 import { AlertCircle, ArrowUpRight, CalendarDays, Github, Loader2 } from 'lucide-react'
 import type { Activity } from 'react-activity-calendar'
@@ -218,7 +217,6 @@ function buildYearActivities(contributions: ApiContribution[], year: number) {
 }
 
 export function GithubHeatmap({ language = 'en' }: { language?: HeatmapLanguage }) {
-  const { resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -226,7 +224,7 @@ export function GithubHeatmap({ language = 'en' }: { language?: HeatmapLanguage 
   const [totalContributions, setTotalContributions] = useState(0)
 
   const currentYear = new Date().getFullYear()
-  const colorScheme = resolvedTheme === 'dark' ? 'dark' : 'light'
+  const colorScheme: 'light' = 'light'
   const text = heatmapI18n[language]
 
   useEffect(() => {
