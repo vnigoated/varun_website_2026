@@ -148,7 +148,6 @@ const projectCopyI18n: Record<
 const projectsI18n: Record<
   ChatLanguage,
   {
-    sectionLabel: string
     heading: string
     description: string
     liveDemo: string
@@ -158,8 +157,7 @@ const projectsI18n: Record<
   }
 > = {
   en: {
-    sectionLabel: 'Projects',
-    heading: 'Featured Work',
+    heading: 'My Work',
     description:
       'A selection of projects that showcase my expertise in AI, full-stack development, and innovative problem-solving.',
     liveDemo: 'Live Demo',
@@ -168,8 +166,7 @@ const projectsI18n: Record<
     liveAria: (title) => `View ${title} live`,
   },
   de: {
-    sectionLabel: 'Projekte',
-    heading: 'Ausgewählte Arbeiten',
+    heading: 'My Work',
     description:
       'Eine Auswahl an Projekten, die meine Erfahrung in KI, Full-Stack-Entwicklung und kreativem Problemlösen zeigen.',
     liveDemo: 'Live-Demo',
@@ -220,9 +217,6 @@ export function ProjectsSection() {
         >
           {/* Section header */}
           <motion.div variants={fadeInUp} className="text-center mb-16">
-            <TextReveal as="span" className="text-sm uppercase tracking-widest text-primary font-medium inline-block" delay={0.05} stagger={0.04}>
-              {projectText.sectionLabel}
-            </TextReveal>
             <TextReveal as="h2" className="text-4xl md:text-5xl font-bold text-foreground mt-4" delay={0.08} stagger={0.06}>
               {projectText.heading}
             </TextReveal>
