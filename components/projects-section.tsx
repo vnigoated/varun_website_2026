@@ -34,7 +34,7 @@ const projects = [
   },
   {
     title: 'Skoda AI Energy System',
-    description: 'Predictive energy management system for electric vehicles using machine learning. Optimizes battery usage and charging schedules based on driving patterns and environmental data.',
+    description: 'Built an AI-powered energy management system for Skoda manufacturing that uses time-series forecasting and anomaly detection to optimize HVAC operations, reduce energy waste, and predict equipment failures in advance.',
     tags: ['TensorFlow', 'IoT', 'AWS', 'Real-time'],
     icon: Car,
     featured: false,
@@ -93,7 +93,7 @@ const projectCopyI18n: Record<
     },
     'Skoda AI Energy System': {
       description:
-        'Predictive energy management system for electric vehicles using machine learning. Optimizes battery usage and charging schedules based on driving patterns and environmental data.',
+        'Built an AI-powered energy management system for Skoda manufacturing that uses time-series forecasting and anomaly detection to optimize HVAC operations, reduce energy waste, and predict equipment failures in advance.',
       previewAlt: (title) => `${title} preview`,
     },
     CallComply: {
