@@ -69,6 +69,7 @@ const projects = [
     icon: Code2,
     featured: true,
     videoUrl: 'https://ik.imagekit.io/yyg3xivug/Main.mp4',
+    fallbackVideoUrl: 'https://ik.imagekit.io/ig88d0ddi/Main.mp4?updatedAt=1775384468979',
     videoAutoplay: true,
     liveUrl: 'https://coedit.sparkstudio.co.in/',
     githubUrl: 'https://github.com/vnigoated/coedit'
@@ -266,14 +267,18 @@ export function ProjectsSection() {
                       {project.videoUrl ? (
                         <div className="mb-5 overflow-hidden rounded-2xl border border-border/70 bg-secondary/40">
                           <video
-                            src={project.videoUrl}
                             autoPlay={project.videoAutoplay}
                             muted
                             playsInline
                             controls
-                            preload="metadata"
+                            preload="auto"
                             className="w-full h-44 object-cover"
-                          />
+                          >
+                            <source src={project.videoUrl} type="video/mp4" />
+                            {'fallbackVideoUrl' in project && project.fallbackVideoUrl ? (
+                              <source src={project.fallbackVideoUrl} type="video/mp4" />
+                            ) : null}
+                          </video>
                         </div>
                       ) : project.imageUrl ? (
                         <div className="mb-5 overflow-hidden rounded-2xl border border-border/70 bg-secondary/40">
