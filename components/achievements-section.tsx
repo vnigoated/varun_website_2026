@@ -42,9 +42,9 @@ const achievementSlides: Record<ChatLanguage, AchievementSlide[]> = {
     {
       title: 'VOIS Marathon Winner',
       description:
-        'Built an accessibility-focused solution that helped visually impaired users navigate digital interfaces.',
+        'An AI-powered educational platform that personalizes learning experiences using advanced LLM technology. Features intelligent tutoring, adaptive assessments, and real-time feedback systems.',
       impact: 'Improved usability and task completion confidence in assistive navigation scenarios.',
-      year: '2024',
+      year: '2026',
       image: '/vois_hackathon.jpeg',
     },
     {
@@ -86,10 +86,10 @@ const achievementSlides: Record<ChatLanguage, AchievementSlide[]> = {
     {
       title: 'VOIS Marathon-Sieger',
       description:
-        'Entwickelte eine barrierefreie Lösung, die sehbehinderten Menschen die Navigation in digitalen Oberflächen erleichtert.',
+        'Eine KI-gestützte Bildungsplattform, die Lernerfahrungen mit fortschrittlicher LLM-Technologie personalisiert. Mit intelligentem Tutoring, adaptiven Prüfungen und Echtzeit-Feedback-Systemen.',
       impact:
         'Steigerte die Benutzerfreundlichkeit und das Vertrauen bei assistiven Navigationsszenarien.',
-      year: '2024',
+      year: '2026',
       image: '/vois_hackathon.jpeg',
     },
     {
