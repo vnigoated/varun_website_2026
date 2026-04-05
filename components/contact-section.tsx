@@ -1,11 +1,16 @@
 'use client'
 
-import { motion, useInView } from 'framer-motion'
-import { useRef, useState, type FormEvent } from 'react'
-import { fadeInUp, staggerContainer, hoverScale, tapScale } from '@/lib/animations'
-import { Mail, MapPin, Phone, Send, Github, Linkedin, Twitter, CheckCircle, AlertCircle } from 'lucide-react'
+import { AnimatePresence, motion, useInView } from 'framer-motion'
+import { useEffect, useRef, useState } from 'react'
+import { fadeInUp, staggerContainer } from '@/lib/animations'
+import { Mail, MapPin, Phone, Github, Linkedin, Twitter, CalendarDays, ArrowUpRight } from 'lucide-react'
 import { TextReveal } from '@/components/text-reveal'
 import { Reveal } from '@/components/reveal'
+
+type ChatLanguage = 'en' | 'de'
+
+const LANGUAGE_STORAGE_KEY = 'portfolio-language'
+const LANGUAGE_CHANGE_EVENT = 'portfolio-language-change'
 
 const socialLinks = [
   { name: 'GitHub', icon: Github, href: 'https://github.com/vnigoated' },
@@ -13,148 +18,178 @@ const socialLinks = [
   { name: 'Twitter', icon: Twitter, href: 'https://twitter.com' },
 ]
 
+const contactCopy: Record<
+  ChatLanguage,
+  {
+    sectionLabel: string
+    heading: string
+    subheading: string
+    getInTouch: string
+    intro: string
+    emailLabel: string
+    phoneLabel: string
+    locationLabel: string
+    locationValue: string
+    bookingTitle: string
+    bookingDescription: string
+    bookingButton: string
+    bookingHideButton: string
+    bookingEnvMessage: string
+  }
+> = {
+  en: {
+    sectionLabel: 'Contact',
+    heading: "Let's Work Together",
+    subheading: "Have a project in mind? Let's connect directly and schedule a focused conversation.",
+    getInTouch: 'Get in Touch',
+    intro:
+      "I'm always open to discussing new projects, creative ideas, or opportunities to be part of your vision.",
+    emailLabel: 'Email',
+    phoneLabel: 'Phone',
+    locationLabel: 'Location',
+    locationValue: 'India',
+    bookingTitle: 'Book a Meeting',
+    bookingDescription: 'Pick a time on my Cal.com schedule for a quick intro call.',
+    bookingButton: 'Book a Meeting',
+    bookingHideButton: 'Hide Booking',
+    bookingEnvMessage: 'Add NEXT_PUBLIC_CAL_BOOKING_URL in your environment to enable booking.',
+  },
+  de: {
+    sectionLabel: 'Kontakt',
+    heading: 'Lass uns zusammenarbeiten',
+    subheading:
+      'Hast du ein Projekt im Kopf? Lass uns direkt verbinden und ein fokussiertes Gespraech planen.',
+    getInTouch: 'Kontakt aufnehmen',
+    intro:
+      'Ich bin immer offen fuer neue Projekte, kreative Ideen oder Moeglichkeiten, Teil deiner Vision zu sein.',
+    emailLabel: 'E-Mail',
+    phoneLabel: 'Telefon',
+    locationLabel: 'Standort',
+    locationValue: 'Indien',
+    bookingTitle: 'Meeting buchen',
+    bookingDescription: 'Waehle einen Termin in meinem Cal.com-Kalender fuer ein kurzes Erstgespraech.',
+    bookingButton: 'Meeting buchen',
+    bookingHideButton: 'Buchung ausblenden',
+    bookingEnvMessage:
+      'Fuege NEXT_PUBLIC_CAL_BOOKING_URL in deiner Umgebung hinzu, um die Buchung zu aktivieren.',
+  },
+}
+
 export function ContactSection() {
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
-  const [formState, setFormState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
-  const [formData, setFormData] = useState({ name: '', email: '', message: '' })
-  const [statusMessage, setStatusMessage] = useState('')
+  const [isBookingOpen, setIsBookingOpen] = useState(false)
+  const [contactLanguage, setContactLanguage] = useState<ChatLanguage>('en')
+  const calBookingUrl = process.env.NEXT_PUBLIC_CAL_BOOKING_URL
+  const calEmbedUrl = calBookingUrl
+    ? `${calBookingUrl}${calBookingUrl.includes('?') ? '&' : '?'}embed=true&theme=light`
+    : ''
+  const copy = contactCopy[contactLanguage]
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setFormState('loading')
-
-    try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      })
-
-      const result = await response.json()
-
-      if (response.ok) {
-        setFormState('success')
-        setStatusMessage('Message sent successfully.')
-        setFormData({ name: '', email: '', message: '' })
-        setTimeout(() => {
-          setFormState('idle')
-          setStatusMessage('')
-        }, 3000)
-        return
-      }
-
-      if (result?.reason === 'smtp-not-configured' && result?.mailtoUrl) {
-        window.location.assign(result.mailtoUrl)
-        setFormState('success')
-        setStatusMessage('Email app opened with your message.')
-        setFormData({ name: '', email: '', message: '' })
-        setTimeout(() => {
-          setFormState('idle')
-          setStatusMessage('')
-        }, 3000)
-        return
-      }
-
-      setFormState('error')
-      setStatusMessage(result?.error || 'Something went wrong. Please try again.')
-    } catch {
-      setFormState('error')
-      setStatusMessage('Could not reach the contact endpoint.')
+  useEffect(() => {
+    const savedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY)
+    if (savedLanguage === 'en' || savedLanguage === 'de') {
+      setContactLanguage(savedLanguage)
     }
-  }
+
+    const handleLanguageEvent = (event: Event) => {
+      const customEvent = event as CustomEvent<{ language?: ChatLanguage }>
+      const nextLanguage = customEvent.detail?.language
+      if (nextLanguage === 'en' || nextLanguage === 'de') {
+        setContactLanguage(nextLanguage)
+      }
+    }
+
+    window.addEventListener(LANGUAGE_CHANGE_EVENT, handleLanguageEvent as EventListener)
+    return () => {
+      window.removeEventListener(LANGUAGE_CHANGE_EVENT, handleLanguageEvent as EventListener)
+    }
+  }, [])
 
   return (
     <section
       ref={ref}
       id="contact"
-      className="py-32 bg-secondary/30 relative overflow-hidden scroll-mt-28"
+      className="relative overflow-hidden bg-secondary/30 py-32 scroll-mt-28"
     >
-      {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent" />
-      
-      <div className="container mx-auto px-6 relative z-10">
+      <div className="absolute top-0 right-0 h-full w-1/2 bg-gradient-to-l from-primary/5 to-transparent" />
+
+      <div className="container relative z-10 mx-auto px-6">
         <motion.div
           variants={staggerContainer}
           initial="hidden"
           animate={isInView ? 'visible' : 'hidden'}
         >
-          {/* Section header */}
-          <motion.div variants={fadeInUp} className="text-center mb-16">
-            <TextReveal as="span" className="text-sm uppercase tracking-widest text-primary font-medium inline-block" delay={0.05} stagger={0.04}>
-              Contact
+          <motion.div variants={fadeInUp} className="mb-16 text-center">
+            <TextReveal as="span" className="inline-block text-sm font-medium uppercase tracking-widest text-primary" delay={0.05} stagger={0.04}>
+              {copy.sectionLabel}
             </TextReveal>
-            <TextReveal as="h2" className="text-4xl md:text-5xl font-bold text-foreground mt-4" delay={0.08} stagger={0.06}>
-              Let&apos;s Work Together
+            <TextReveal as="h2" className="mt-4 text-4xl font-bold text-foreground md:text-5xl" delay={0.08} stagger={0.06}>
+              {copy.heading}
             </TextReveal>
-            <TextReveal as="p" className="text-muted-foreground mt-4 max-w-xl mx-auto" delay={0.12} stagger={0.025}>
-              Have a project in mind? I&apos;d love to hear about it. Let&apos;s connect and create something amazing.
+            <TextReveal as="p" className="mx-auto mt-4 max-w-xl text-muted-foreground" delay={0.12} stagger={0.025}>
+              {copy.subheading}
             </TextReveal>
           </motion.div>
 
-          <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
-            {/* Contact info */}
+          <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-2">
             <motion.div variants={fadeInUp} className="space-y-8">
               <div className="space-y-6">
-                <TextReveal as="h3" className="text-2xl font-bold text-foreground inline-block" delay={0.05} stagger={0.05}>
-                  Get in Touch
+                <TextReveal as="h3" className="inline-block text-2xl font-bold text-foreground" delay={0.05} stagger={0.05}>
+                  {copy.getInTouch}
                 </TextReveal>
-                <TextReveal as="p" className="text-muted-foreground leading-relaxed" delay={0.08} stagger={0.025}>
-                  I&apos;m always open to discussing new projects, creative ideas, or opportunities to be part of your visions.
+                <TextReveal as="p" className="leading-relaxed text-muted-foreground" delay={0.08} stagger={0.025}>
+                  {copy.intro}
                 </TextReveal>
               </div>
 
-              {/* Contact details */}
               <div className="space-y-4">
                 <Reveal delay={0.05}>
-                  <motion.div 
+                  <motion.div
                     whileHover={{ x: 4 }}
-                    className="flex items-center gap-4 p-4 bg-card rounded-2xl border border-border"
+                    className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4"
                   >
-                    <div className="p-3 bg-primary/10 rounded-xl">
-                      <Mail className="w-5 h-5 text-primary" />
+                    <div className="rounded-xl bg-primary/10 p-3">
+                      <Mail className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Email</p>
+                      <p className="text-sm text-muted-foreground">{copy.emailLabel}</p>
                       <p className="font-medium text-foreground">vninamdar03@gmail.com</p>
                     </div>
                   </motion.div>
                 </Reveal>
 
                 <Reveal delay={0.1}>
-                  <motion.div 
+                  <motion.div
                     whileHover={{ x: 4 }}
-                    className="flex items-center gap-4 p-4 bg-card rounded-2xl border border-border"
+                    className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4"
                   >
-                    <div className="p-3 bg-primary/10 rounded-xl">
-                      <Phone className="w-5 h-5 text-primary" />
+                    <div className="rounded-xl bg-primary/10 p-3">
+                      <Phone className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Phone</p>
+                      <p className="text-sm text-muted-foreground">{copy.phoneLabel}</p>
                       <p className="font-medium text-foreground">+91 75172 77551</p>
                     </div>
                   </motion.div>
                 </Reveal>
 
                 <Reveal delay={0.15}>
-                  <motion.div 
+                  <motion.div
                     whileHover={{ x: 4 }}
-                    className="flex items-center gap-4 p-4 bg-card rounded-2xl border border-border"
+                    className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4"
                   >
-                    <div className="p-3 bg-primary/10 rounded-xl">
-                      <MapPin className="w-5 h-5 text-primary" />
+                    <div className="rounded-xl bg-primary/10 p-3">
+                      <MapPin className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Location</p>
-                      <p className="font-medium text-foreground">India</p>
+                      <p className="text-sm text-muted-foreground">{copy.locationLabel}</p>
+                      <p className="font-medium text-foreground">{copy.locationValue}</p>
                     </div>
                   </motion.div>
                 </Reveal>
               </div>
 
-              {/* Social links */}
               <div className="flex items-center gap-4">
                 {socialLinks.map((social) => (
                   <motion.a
@@ -164,112 +199,70 @@ export function ContactSection() {
                     rel="noopener noreferrer"
                     whileHover={{ scale: 1.1, y: -2 }}
                     whileTap={{ scale: 0.95 }}
-                    className="p-3 bg-card rounded-xl border border-border text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors"
+                    className="rounded-xl border border-border bg-card p-3 text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
                     aria-label={social.name}
                   >
-                    <social.icon className="w-5 h-5" />
+                    <social.icon className="h-5 w-5" />
                   </motion.a>
                 ))}
               </div>
             </motion.div>
 
-            {/* Contact form */}
             <Reveal delay={0.1}>
               <motion.div variants={fadeInUp}>
-                <form onSubmit={handleSubmit} className="glass p-8 rounded-3xl border border-border/50 shadow-xl">
-                  <div className="space-y-6">
-                  {/* Name field */}
-                  <div className="space-y-2">
-                    <label htmlFor="name" className="text-sm font-medium text-foreground">
-                      Name
-                    </label>
-                    <motion.input
-                      whileFocus={{ scale: 1.01 }}
-                      type="text"
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      required
-                      className="w-full px-4 py-3 bg-background rounded-xl border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground placeholder:text-muted-foreground"
-                      placeholder="Your name"
-                    />
-                  </div>
+                <div className="glass rounded-3xl border border-border/50 p-8 shadow-xl">
+                  <div className="rounded-2xl border border-primary/25 bg-primary/5 p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-lg font-semibold text-foreground">{copy.bookingTitle}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {copy.bookingDescription}
+                        </p>
+                      </div>
+                      <div className="rounded-xl bg-primary/12 p-2">
+                        <CalendarDays className="h-5 w-5 text-primary" />
+                      </div>
+                    </div>
 
-                  {/* Email field */}
-                  <div className="space-y-2">
-                    <label htmlFor="email" className="text-sm font-medium text-foreground">
-                      Email
-                    </label>
-                    <motion.input
-                      whileFocus={{ scale: 1.01 }}
-                      type="email"
-                      id="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      required
-                      className="w-full px-4 py-3 bg-background rounded-xl border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground placeholder:text-muted-foreground"
-                      placeholder="your@email.com"
-                    />
-                  </div>
+                    {calBookingUrl ? (
+                      <>
+                        <motion.button
+                          type="button"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => setIsBookingOpen((prev) => !prev)}
+                          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/25"
+                        >
+                          {isBookingOpen ? copy.bookingHideButton : copy.bookingButton}
+                          <ArrowUpRight className="h-4 w-4" />
+                        </motion.button>
 
-                  {/* Message field */}
-                  <div className="space-y-2">
-                    <label htmlFor="message" className="text-sm font-medium text-foreground">
-                      Message
-                    </label>
-                    <motion.textarea
-                      whileFocus={{ scale: 1.01 }}
-                      id="message"
-                      value={formData.message}
-                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      required
-                      rows={5}
-                      className="w-full px-4 py-3 bg-background rounded-xl border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none text-foreground placeholder:text-muted-foreground"
-                      placeholder="Tell me about your project..."
-                    />
-                  </div>
-
-                  {/* Submit button */}
-                  <motion.button
-                    type="submit"
-                    disabled={formState === 'loading' || formState === 'success'}
-                    whileHover={formState === 'idle' ? hoverScale : undefined}
-                    whileTap={formState === 'idle' ? tapScale : undefined}
-                    className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-medium flex items-center justify-center gap-2 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-                  >
-                    {formState === 'idle' && (
-                      <>
-                        Send Message
-                        <Send className="w-4 h-4" />
+                        <AnimatePresence initial={false}>
+                          {isBookingOpen ? (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                              animate={{ opacity: 1, height: '70vh', marginTop: 16 }}
+                              exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                              transition={{ duration: 0.28, ease: 'easeInOut' }}
+                              className="overflow-hidden rounded-2xl border border-[#d8c7b4] bg-[#f1e7db] p-3"
+                            >
+                              <iframe
+                                src={calEmbedUrl}
+                                title="Book a meeting"
+                                className="h-full w-full rounded-xl border border-[#d8c7b4] bg-white"
+                                loading="lazy"
+                              />
+                            </motion.div>
+                          ) : null}
+                        </AnimatePresence>
                       </>
-                    )}
-                    {formState === 'loading' && (
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                        className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full"
-                      />
-                    )}
-                    {formState === 'success' && (
-                      <>
-                        <CheckCircle className="w-5 h-5" />
-                        Message Sent!
-                      </>
-                    )}
-                    {formState === 'error' && (
-                      <>
-                        <AlertCircle className="w-5 h-5" />
-                        Try Again
-                      </>
-                    )}
-                  </motion.button>
-                    {statusMessage && (
-                      <p className={`text-sm ${formState === 'error' ? 'text-destructive' : 'text-muted-foreground'} text-center`} aria-live="polite">
-                        {statusMessage}
+                    ) : (
+                      <p className="mt-3 rounded-xl border border-dashed border-border bg-background/70 px-3 py-2 text-xs text-muted-foreground">
+                        {copy.bookingEnvMessage}
                       </p>
                     )}
                   </div>
-                </form>
+                </div>
               </motion.div>
             </Reveal>
           </div>
