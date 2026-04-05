@@ -14,22 +14,17 @@ const LANGUAGE_CHANGE_EVENT = 'portfolio-language-change'
 const content: Record<
   ChatLanguage,
   {
-    sectionLabel: string
     heading: string
     description: string
   }
 > = {
   en: {
-    sectionLabel: 'Skills',
-    heading: 'Skill Signals',
-    description:
-      'A staggered, card-first interaction that reflects how I deliver engineering outcomes across AI, product, and security.',
+    heading: 'Skills',
+    description: '',
   },
   de: {
-    sectionLabel: 'Fähigkeiten',
-    heading: 'Skill-Signale',
-    description:
-      'Eine gestaffelte, kartenbasierte Interaktion, die zeigt, wie ich Engineering-Ergebnisse über KI, Produkt und Security liefere.',
+    heading: 'Fähigkeiten',
+    description: '',
   },
 }
 
@@ -69,14 +64,6 @@ export function SkillsSection() {
       <div className="container relative mx-auto px-6">
         <motion.div variants={staggerContainer} initial="hidden" animate={isInView ? 'visible' : 'hidden'}>
           <motion.div variants={fadeInUp} className="mx-auto mb-14 max-w-3xl text-center">
-            <TextReveal
-              as="span"
-              className="inline-block text-sm font-medium uppercase tracking-[0.28em] text-primary"
-              delay={0.05}
-              stagger={0.04}
-            >
-              {copy.sectionLabel}
-            </TextReveal>
             <TextReveal
               as="h2"
               className="mt-4 text-4xl font-bold text-foreground md:text-5xl"
