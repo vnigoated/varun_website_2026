@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { readFileSync, readdirSync } from 'node:fs'
+import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { join, extname } from 'node:path'
 import PDFParser from 'pdf2json'
 
@@ -314,15 +314,35 @@ async function buildResumeVectorStore() {
     return
   }
 
-  const uploadDir = join(process.cwd(), 'upload')
-  const files = readdirSync(uploadDir)
-  const pdfFile = files.find((file) => extname(file).toLowerCase() === '.pdf')
+  const candidateDirs = ['upload', 'public']
+  let fullPath = ''
+  let selectedFile = ''
 
-  if (!pdfFile) {
-    throw new Error('No resume PDF found in upload folder.')
+  for (const dirName of candidateDirs) {
+    const dirPath = join(process.cwd(), dirName)
+    if (!existsSync(dirPath)) {
+      continue
+    }
+
+    const files = readdirSync(dirPath)
+    const pdfFile = files.find((file) => extname(file).toLowerCase() === '.pdf')
+    if (pdfFile) {
+      fullPath = join(dirPath, pdfFile)
+      selectedFile = pdfFile
+      break
+    }
   }
 
-  const fullPath = join(uploadDir, pdfFile)
+  if (!fullPath || !selectedFile) {
+    cachedResumeFile = 'Unavailable'
+    cachedResumeChunks = [
+      'Resume PDF is not available in the deployment artifact. Use project and profile context only.',
+    ]
+    cachedResumeVectors = [embedText(cachedResumeChunks[0])]
+    cachedResumeAt = now
+    return
+  }
+
   const fileBuffer = readFileSync(fullPath)
   const extractedText = await new Promise<string>((resolve, reject) => {
     const parser = new PDFParser(undefined, true)
@@ -369,13 +389,17 @@ async function buildResumeVectorStore() {
   const cleanText = extractedText.replace(/\s+/g, ' ').trim()
 
   if (!cleanText) {
-    throw new Error('Resume PDF text could not be extracted.')
+    cachedResumeFile = selectedFile
+    cachedResumeChunks = ['Resume PDF was found but text extraction returned empty content.']
+    cachedResumeVectors = [embedText(cachedResumeChunks[0])]
+    cachedResumeAt = now
+    return
   }
 
   const chunks = splitIntoChunks(cleanText)
   const vectors = chunks.map((chunk) => embedText(chunk))
 
-  cachedResumeFile = pdfFile
+  cachedResumeFile = selectedFile
   cachedResumeChunks = chunks
   cachedResumeVectors = vectors
   cachedResumeAt = now
@@ -411,7 +435,10 @@ async function buildSearchContext() {
 
   const serpApiKey = process.env.SERP_API || process.env.SERPAPI_API_KEY
   if (!serpApiKey) {
-    throw new Error('SERP API key is missing in environment variables.')
+    const fallback = 'SerpAPI key missing. External profile search context unavailable.'
+    cachedSearchContext = fallback
+    cachedSearchAt = now
+    return fallback
   }
 
   const searchUrl = new URL('https://serpapi.com/search.json')
@@ -427,8 +454,10 @@ async function buildSearchContext() {
   })
 
   if (!serpResponse.ok) {
-    const details = await serpResponse.text()
-    throw new Error(`SerpAPI request failed (${serpResponse.status}): ${details}`)
+    const fallback = `SerpAPI request failed (${serpResponse.status}). External profile search context unavailable.`
+    cachedSearchContext = fallback
+    cachedSearchAt = now
+    return fallback
   }
 
   const serpData = (await serpResponse.json()) as {
