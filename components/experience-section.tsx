@@ -1,11 +1,16 @@
 'use client'
 
 import { AnimatePresence, motion, useInView } from 'framer-motion'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { fadeInUp, staggerContainer } from '@/lib/animations'
 import { Briefcase, Calendar, TrendingUp, Cpu, Shield, ChevronRight } from 'lucide-react'
 import { TextReveal } from '@/components/text-reveal'
 import { Reveal } from '@/components/reveal'
+
+type ChatLanguage = 'en' | 'de'
+
+const LANGUAGE_STORAGE_KEY = 'portfolio-language'
+const LANGUAGE_CHANGE_EVENT = 'portfolio-language-change'
 
 type ExperienceItem = {
   id: string
@@ -24,105 +29,227 @@ type ExperienceItem = {
   }>
 }
 
-const experiences: ExperienceItem[] = [
+const experienceI18n: Record<
+  ChatLanguage,
   {
-    id: 'buildup-mirai',
-    title: 'Software Developer Intern',
-    company: 'BuildUp Mirai',
-    period: 'Jan 2026 - Present',
-    roleLabel: 'Current Role',
-    description:
-      'I contributed to production-ready AI platform engineering by improving deployment reliability, reducing API failure rates, and accelerating prototype-to-release delivery for enterprise use cases.',
-    highlights: [
-      'Improved prototype-to-release time by 30%',
-      'Reduced API failure rate by 40%',
-      'Strengthened CI/CD quality checks',
-    ],
-    technologies: ['FastAPI', 'LLM Pipelines', 'CI/CD', 'Production Reliability'],
-    icon: Briefcase,
-    impactStats: [
+    sectionLabel: string
+    heading: string
+    viewFull: string
+    impact: string
+    experiences: ExperienceItem[]
+  }
+> = {
+  en: {
+    sectionLabel: 'Experience',
+    heading: 'Career in Motion',
+    viewFull: 'View full experience',
+    impact: 'Impact',
+    experiences: [
       {
-        label: 'Prototype to Release',
-        value: '30% Faster',
-        note: 'Delivery acceleration in internship workflow',
+        id: 'buildup-mirai',
+        title: 'Software Developer Intern',
+        company: 'BuildUp Mirai',
+        period: 'Jan 2026 - Present',
+        roleLabel: 'Current Role',
+        description:
+          'I contributed to production-ready AI platform engineering by improving deployment reliability, reducing API failure rates, and accelerating prototype-to-release delivery for enterprise use cases.',
+        highlights: [
+          'Improved prototype-to-release time by 30%',
+          'Reduced API failure rate by 40%',
+          'Strengthened CI/CD quality checks',
+        ],
+        technologies: ['FastAPI', 'LLM Pipelines', 'CI/CD', 'Production Reliability'],
+        icon: Briefcase,
+        impactStats: [
+          {
+            label: 'Prototype to Release',
+            value: '30% Faster',
+            note: 'Delivery acceleration in internship workflow',
+          },
+          {
+            label: 'API Reliability',
+            value: '40% Fewer Failures',
+            note: 'Stability improvements in production flow',
+          },
+          {
+            label: 'Hands-on Domains',
+            value: 'AI + Edge + Backend',
+            note: 'Built across product, infra, and applied ML',
+          },
+        ],
       },
       {
-        label: 'API Reliability',
-        value: '40% Fewer Failures',
-        note: 'Stability improvements in production flow',
+        id: 'bootcoding',
+        title: 'Software Developer Intern',
+        company: 'Bootcoding',
+        period: 'Oct 2025 - Nov 2025',
+        roleLabel: 'Internship',
+        description:
+          'Built practical AI workflows including a resume analyzer and YouTube/PDF summarization pipelines focused on real-world utility and performance.',
+        highlights: ['Resume Analyzer pipeline', 'YouTube/PDF summarizer', 'Applied AI delivery'],
+        technologies: ['Python', 'RAG', 'NLP', 'Applied AI'],
+        icon: Cpu,
+        impactStats: [
+          {
+            label: 'Pipeline Development',
+            value: '2 Core AI Pipelines',
+            note: 'Resume analyzer + document/video summarizer',
+          },
+          {
+            label: 'Delivery Focus',
+            value: 'Production-minded',
+            note: 'Built for practical utility and stable execution',
+          },
+          {
+            label: 'Applied Scope',
+            value: 'NLP + Summarization',
+            note: 'End-to-end implementation for real use cases',
+          },
+        ],
       },
       {
-        label: 'Hands-on Domains',
-        value: 'AI + Edge + Backend',
-        note: 'Built across product, infra, and applied ML',
+        id: 'payload-drone',
+        title: 'AI Engineer Intern',
+        company: 'Payload Drone - Vishwakarma University',
+        period: 'Jun 2024 - Dec 2024',
+        roleLabel: 'Internship',
+        description:
+          'Worked on autonomous drone intelligence by designing high-payload systems and building GPS-independent visual SLAM capabilities.',
+        highlights: ['Autonomous drone system', 'Visual SLAM pipeline', 'Edge AI implementation'],
+        technologies: ['Computer Vision', 'SLAM', 'Edge AI', 'Autonomy'],
+        icon: Shield,
+        impactStats: [
+          {
+            label: 'Autonomy Engineering',
+            value: 'GPS-Independent Vision',
+            note: 'Designed visual navigation for drone reliability',
+          },
+          {
+            label: 'System Capability',
+            value: 'High-Payload Design',
+            note: 'Balanced performance and intelligent control',
+          },
+          {
+            label: 'Applied Domain',
+            value: 'Edge Robotics AI',
+            note: 'Computer vision integrated with real hardware',
+          },
+        ],
       },
     ],
   },
-  {
-    id: 'bootcoding',
-    title: 'Software Developer Intern',
-    company: 'Bootcoding',
-    period: 'Oct 2025 - Nov 2025',
-    roleLabel: 'Internship',
-    description:
-      'Built practical AI workflows including a resume analyzer and YouTube/PDF summarization pipelines focused on real-world utility and performance.',
-    highlights: ['Resume Analyzer pipeline', 'YouTube/PDF summarizer', 'Applied AI delivery'],
-    technologies: ['Python', 'RAG', 'NLP', 'Applied AI'],
-    icon: Cpu,
-    impactStats: [
+  de: {
+    sectionLabel: 'Erfahrung',
+    heading: 'Karriere in Bewegung',
+    viewFull: 'Gesamte Erfahrung ansehen',
+    impact: 'Wirkung',
+    experiences: [
       {
-        label: 'Pipeline Development',
-        value: '2 Core AI Pipelines',
-        note: 'Resume analyzer + document/video summarizer',
+        id: 'buildup-mirai',
+        title: 'Softwareentwickler-Praktikant',
+        company: 'BuildUp Mirai',
+        period: 'Jan 2026 - Heute',
+        roleLabel: 'Aktuelle Rolle',
+        description:
+          'Ich habe an produktionsreifer KI-Plattform-Entwicklung mitgewirkt, indem ich die Bereitstellungszuverlässigkeit verbessert, API-Fehler reduziert und die Lieferung von Prototypen bis zum Release für Enterprise-Anwendungsfälle beschleunigt habe.',
+        highlights: [
+          'Prototyp-zu-Release-Zeit um 30 % verbessert',
+          'API-Fehlerrate um 40 % reduziert',
+          'CI/CD-Qualitätsprüfungen gestärkt',
+        ],
+        technologies: ['FastAPI', 'LLM-Pipelines', 'CI/CD', 'Produktionszuverlässigkeit'],
+        icon: Briefcase,
+        impactStats: [
+          {
+            label: 'Prototyp bis Release',
+            value: '30 % schneller',
+            note: 'Beschleunigte Auslieferung im Praktikumsablauf',
+          },
+          {
+            label: 'API-Zuverlässigkeit',
+            value: '40 % weniger Fehler',
+            note: 'Stabilere Abläufe im Produktionsfluss',
+          },
+          {
+            label: 'Praktische Bereiche',
+            value: 'KI + Edge + Backend',
+            note: 'Arbeit über Produkt, Infrastruktur und angewandtes ML hinweg',
+          },
+        ],
       },
       {
-        label: 'Delivery Focus',
-        value: 'Production-minded',
-        note: 'Built for practical utility and stable execution',
+        id: 'bootcoding',
+        title: 'Softwareentwickler-Praktikant',
+        company: 'Bootcoding',
+        period: 'Okt 2025 - Nov 2025',
+        roleLabel: 'Praktikum',
+        description:
+          'Ich habe praxisnahe KI-Workflows gebaut, darunter einen Lebenslauf-Analysator und Zusammenfassungspipelines für YouTube/PDFs mit Fokus auf realen Nutzen und Performance.',
+        highlights: ['Lebenslauf-Analysator-Pipeline', 'YouTube/PDF-Zusammenfassung', 'Angewandte KI-Auslieferung'],
+        technologies: ['Python', 'RAG', 'NLP', 'Angewandte KI'],
+        icon: Cpu,
+        impactStats: [
+          {
+            label: 'Pipeline-Entwicklung',
+            value: '2 zentrale KI-Pipelines',
+            note: 'Lebenslauf-Analysator plus Dokument-/Video-Zusammenfassung',
+          },
+          {
+            label: 'Auslieferungsfokus',
+            value: 'Produktionsorientiert',
+            note: 'Für praktischen Nutzen und stabile Ausführung entwickelt',
+          },
+          {
+            label: 'Anwendungsbereich',
+            value: 'NLP + Zusammenfassung',
+            note: 'End-to-End-Implementierung für reale Anwendungsfälle',
+          },
+        ],
       },
       {
-        label: 'Applied Scope',
-        value: 'NLP + Summarization',
-        note: 'End-to-end implementation for real use cases',
+        id: 'payload-drone',
+        title: 'KI-Ingenieur-Praktikant',
+        company: 'Payload Drone - Vishwakarma University',
+        period: 'Jun 2024 - Dez 2024',
+        roleLabel: 'Praktikum',
+        description:
+          'Ich habe an autonomen Drohnenintelligenz gearbeitet, indem ich Systeme für hohe Nutzlasten entworfen und GPS-unabhängige visuelle SLAM-Fähigkeiten aufgebaut habe.',
+        highlights: ['Autonomes Drohnensystem', 'Visuelle SLAM-Pipeline', 'Edge-KI-Implementierung'],
+        technologies: ['Computer Vision', 'SLAM', 'Edge KI', 'Autonomie'],
+        icon: Shield,
+        impactStats: [
+          {
+            label: 'Autonomie-Engineering',
+            value: 'GPS-unabhängige Vision',
+            note: 'Visuelle Navigation für zuverlässige Drohnen entwickelt',
+          },
+          {
+            label: 'Systemfähigkeit',
+            value: 'Design für hohe Nutzlast',
+            note: 'Leistung und intelligente Steuerung ausgewogen kombiniert',
+          },
+          {
+            label: 'Anwendungsdomäne',
+            value: 'Edge-Robotics-KI',
+            note: 'Computer Vision mit realer Hardware integriert',
+          },
+        ],
       },
     ],
   },
-  {
-    id: 'payload-drone',
-    title: 'AI Engineer Intern',
-    company: 'Payload Drone - Vishwakarma University',
-    period: 'Jun 2024 - Dec 2024',
-    roleLabel: 'Internship',
-    description:
-      'Worked on autonomous drone intelligence by designing high-payload systems and building GPS-independent visual SLAM capabilities.',
-    highlights: ['Autonomous drone system', 'Visual SLAM pipeline', 'Edge AI implementation'],
-    technologies: ['Computer Vision', 'SLAM', 'Edge AI', 'Autonomy'],
-    icon: Shield,
-    impactStats: [
-      {
-        label: 'Autonomy Engineering',
-        value: 'GPS-Independent Vision',
-        note: 'Designed visual navigation for drone reliability',
-      },
-      {
-        label: 'System Capability',
-        value: 'High-Payload Design',
-        note: 'Balanced performance and intelligent control',
-      },
-      {
-        label: 'Applied Domain',
-        value: 'Edge Robotics AI',
-        note: 'Computer vision integrated with real hardware',
-      },
-    ],
-  },
-]
+}
 
 export function ExperienceSection() {
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
-  const [activeExperienceId, setActiveExperienceId] = useState(experiences[0].id)
+  const [experienceLanguage, setExperienceLanguage] = useState<ChatLanguage>('en')
+  const [activeExperienceId, setActiveExperienceId] = useState(
+    experienceI18n.en.experiences[0].id,
+  )
   const [hasSelectedExperience, setHasSelectedExperience] = useState(false)
+
+  const experienceText = experienceI18n[experienceLanguage]
+  const experiences = experienceText.experiences
 
   const featuredExperience =
     experiences.find((experience) => experience.id === activeExperienceId) ?? experiences[0]
@@ -130,6 +257,26 @@ export function ExperienceSection() {
   const compactExperiences = experiences.filter(
     (experience) => experience.id !== featuredExperience.id,
   )
+
+  useEffect(() => {
+    const savedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY)
+    if (savedLanguage === 'en' || savedLanguage === 'de') {
+      setExperienceLanguage(savedLanguage)
+    }
+
+    const handleLanguageEvent = (event: Event) => {
+      const customEvent = event as CustomEvent<{ language?: ChatLanguage }>
+      const nextLanguage = customEvent.detail?.language
+      if (nextLanguage === 'en' || nextLanguage === 'de') {
+        setExperienceLanguage(nextLanguage)
+      }
+    }
+
+    window.addEventListener(LANGUAGE_CHANGE_EVENT, handleLanguageEvent as EventListener)
+    return () => {
+      window.removeEventListener(LANGUAGE_CHANGE_EVENT, handleLanguageEvent as EventListener)
+    }
+  }, [])
 
   const handleSelectExperience = (experienceId: string) => {
     setHasSelectedExperience(true)
@@ -153,10 +300,10 @@ export function ExperienceSection() {
           {/* Section header */}
           <motion.div variants={fadeInUp} className="text-center mb-20">
             <TextReveal as="span" className="text-sm uppercase tracking-widest text-primary font-medium inline-block" delay={0.05} stagger={0.04}>
-              Experience
+              {experienceText.sectionLabel}
             </TextReveal>
             <TextReveal as="h2" className="text-4xl md:text-5xl font-bold text-foreground mt-4" delay={0.08} stagger={0.06}>
-              Career in Motion
+              {experienceText.heading}
             </TextReveal>
           </motion.div>
 
@@ -214,7 +361,7 @@ export function ExperienceSection() {
                     </div>
 
                     <div className="mt-5 pt-4 border-t border-border/70 flex items-center justify-between text-sm text-primary font-medium">
-                      <span>View full experience</span>
+                      <span>{experienceText.viewFull}</span>
                       <ChevronRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
                     </div>
                   </motion.article>
@@ -296,7 +443,7 @@ export function ExperienceSection() {
                     >
                       <div className="inline-flex items-center gap-2 text-primary mb-3">
                         <TrendingUp className="w-4 h-4" />
-                        <span className="text-xs uppercase tracking-widest font-semibold">Impact</span>
+                        <span className="text-xs uppercase tracking-widest font-semibold">{experienceText.impact}</span>
                       </div>
                       <p className="text-sm text-muted-foreground mb-2">{stat.label}</p>
                       <p className="text-xl font-bold text-foreground mb-2">{stat.value}</p>
@@ -355,7 +502,7 @@ export function ExperienceSection() {
                   </div>
 
                   <div className="mt-5 pt-4 border-t border-border/70 flex items-center justify-between text-sm text-primary font-medium">
-                    <span>View full experience</span>
+                    <span>{experienceText.viewFull}</span>
                     <ChevronRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
                   </div>
                 </motion.article>

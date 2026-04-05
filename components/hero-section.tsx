@@ -2,18 +2,13 @@
 
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { useRef, useEffect, useState } from 'react'
-import { Volume2, Loader2, Pause, Bot, SendHorizontal, Sparkles } from 'lucide-react'
+import { Volume2, Loader2, Pause, Bot, SendHorizontal, Sparkles, FileDown } from 'lucide-react'
 import { fadeInUp, staggerContainer, hoverScale, tapScale } from '@/lib/animations'
 import { TextReveal } from '@/components/text-reveal'
 import { GithubHeatmap } from '@/components/github-heatmap'
 
-const roles = [
-  'AI Engineer',
-  'Cybersecurity Engineer',
-  'Full Stack Developer'
-]
-
 const ABOUT_ME_AUDIO_SRC = '/audio/about-me.wav'
+const ABOUT_ME_AUDIO_SRC_DE = '/audio/german_about_me.wav'
 
 type ChatMessage = {
   id: string
@@ -21,17 +16,94 @@ type ChatMessage = {
   text: string
 }
 
-const initialChatMessages: ChatMessage[] = [
+type ChatLanguage = 'en' | 'de'
+
+const LANGUAGE_STORAGE_KEY = 'portfolio-language'
+const LANGUAGE_CHANGE_EVENT = 'portfolio-language-change'
+
+const chatbotI18n: Record<
+  ChatLanguage,
   {
-    id: 'intro',
-    role: 'assistant' as const,
-    text: 'Hi, I am Varun\'s AI assistant. Ask me anything about his profile, projects, and experience.',
+    intro: string
+    guide: string
+    online: string
+    placeholder: string
+    quickPrompts: [string, string, string]
+    errorPrefix: string
+    thinking: string
+  }
+> = {
+  en: {
+    intro: "Hi, I am Varun's AI assistant. Ask me anything about his profile, projects, and experience.",
+    guide: 'Portfolio Guide',
+    online: 'Online',
+    placeholder: 'Ask about projects, stack, achievements...',
+    quickPrompts: ['What can Varun build?', 'Tech stack?', 'Internship impact?'],
+    errorPrefix: 'AI chat error',
+    thinking: 'Thinking...',
   },
-]
+  de: {
+    intro: 'Hallo, ich bin Varuns KI-Assistent. Frag mich alles zu seinem Profil, seinen Projekten und seiner Erfahrung.',
+    guide: 'Portfolio-Assistent',
+    online: 'Online',
+    placeholder: 'Frage nach Projekten, Stack, Erfolgen...',
+    quickPrompts: ['Was kann Varun bauen?', 'Tech-Stack?', 'Praktikums-Impact?'],
+    errorPrefix: 'KI-Chat-Fehler',
+    thinking: 'Denke nach...',
+  },
+}
+
+const heroI18n: Record<
+  ChatLanguage,
+  {
+    description: string
+    aboutMe: string
+    stopAudio: string
+    loadingAudio: string
+    downloadResume: string
+    contactMe: string
+    seeProjects: string
+    roles: [string, string, string]
+  }
+> = {
+  en: {
+    description:
+      'I build intelligent and secure products that turn ideas into production-ready systems.',
+    aboutMe: 'About Me',
+    stopAudio: 'Stop About Me Audio',
+    loadingAudio: 'Loading Audio...',
+    downloadResume: 'Download Resume',
+    contactMe: 'Contact Me',
+    seeProjects: 'See Projects',
+    roles: ['AI Engineer', 'Cybersecurity Engineer', 'Full Stack Developer'],
+  },
+  de: {
+    description:
+      'Ich entwickle intelligente und sichere Produkte, die Ideen in produktionsreife Systeme verwandeln.',
+    aboutMe: 'Über mich',
+    stopAudio: 'Über-mich-Audio stoppen',
+    loadingAudio: 'Audio wird geladen...',
+    downloadResume: 'Lebenslauf herunterladen',
+    contactMe: 'Kontakt',
+    seeProjects: 'Projekte ansehen',
+    roles: ['KI-Ingenieur', 'Cybersecurity-Ingenieur', 'Full-Stack-Entwickler'],
+  },
+}
+
+function createInitialChatMessages(language: ChatLanguage): ChatMessage[] {
+  return [
+    {
+      id: `intro-${language}`,
+      role: 'assistant' as const,
+      text: chatbotI18n[language].intro,
+    },
+  ]
+}
 
 export function HeroSection() {
   const containerRef = useRef<HTMLElement>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [activeAudioLanguage, setActiveAudioLanguage] = useState<ChatLanguage>('en')
   const [currentRole, setCurrentRole] = useState(0)
   const [displayText, setDisplayText] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
@@ -40,7 +112,8 @@ export function HeroSection() {
   const [useApiFallback, setUseApiFallback] = useState(false)
   const [chatInput, setChatInput] = useState('')
   const [isBotTyping, setIsBotTyping] = useState(false)
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(initialChatMessages)
+  const [chatLanguage, setChatLanguage] = useState<ChatLanguage>('en')
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(createInitialChatMessages('en'))
   
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -49,10 +122,67 @@ export function HeroSection() {
   
   const y = useTransform(scrollYProgress, [0, 1], ['0%', '50%'])
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0])
+  const chatText = chatbotI18n[chatLanguage]
+  const heroText = heroI18n[chatLanguage]
+
+  useEffect(() => {
+    const savedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY)
+    if (savedLanguage === 'en' || savedLanguage === 'de') {
+      setChatLanguage(savedLanguage)
+      setChatMessages(createInitialChatMessages(savedLanguage))
+    }
+
+    const handleLanguageEvent = (event: Event) => {
+      const customEvent = event as CustomEvent<{ language?: ChatLanguage }>
+      const nextLanguage = customEvent.detail?.language
+      if (!nextLanguage || nextLanguage === chatLanguage) {
+        return
+      }
+
+      if (audioRef.current && !audioRef.current.paused) {
+        audioRef.current.pause()
+        setIsSpeaking(false)
+      }
+
+      setChatLanguage(nextLanguage)
+      setCurrentRole(0)
+      setDisplayText('')
+      setIsDeleting(false)
+      setChatInput('')
+      setIsBotTyping(false)
+      setChatMessages(createInitialChatMessages(nextLanguage))
+    }
+
+    window.addEventListener(LANGUAGE_CHANGE_EVENT, handleLanguageEvent as EventListener)
+    return () => {
+      window.removeEventListener(LANGUAGE_CHANGE_EVENT, handleLanguageEvent as EventListener)
+    }
+  }, [chatLanguage])
+
+  const handleLanguageChange = (language: ChatLanguage) => {
+    if (language === chatLanguage) {
+      return
+    }
+
+    if (audioRef.current && !audioRef.current.paused) {
+      audioRef.current.pause()
+      setIsSpeaking(false)
+    }
+
+    setChatLanguage(language)
+    setCurrentRole(0)
+    setDisplayText('')
+    setIsDeleting(false)
+    setChatInput('')
+    setIsBotTyping(false)
+    setChatMessages(createInitialChatMessages(language))
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language)
+    window.dispatchEvent(new CustomEvent(LANGUAGE_CHANGE_EVENT, { detail: { language } }))
+  }
 
   // Typing effect
   useEffect(() => {
-    const currentText = roles[currentRole]
+    const currentText = heroText.roles[currentRole]
     const timeout = setTimeout(() => {
       if (!isDeleting) {
         if (displayText.length < currentText.length) {
@@ -65,18 +195,19 @@ export function HeroSection() {
           setDisplayText(displayText.slice(0, -1))
         } else {
           setIsDeleting(false)
-          setCurrentRole((prev) => (prev + 1) % roles.length)
+          setCurrentRole((prev) => (prev + 1) % heroText.roles.length)
         }
       }
     }, isDeleting ? 50 : 100)
 
     return () => clearTimeout(timeout)
-  }, [displayText, isDeleting, currentRole])
+  }, [displayText, isDeleting, currentRole, heroText.roles])
 
   useEffect(() => {
     const audio = new Audio(ABOUT_ME_AUDIO_SRC)
     audio.preload = 'auto'
     audioRef.current = audio
+    setActiveAudioLanguage('en')
 
     audio.onended = () => setIsSpeaking(false)
     audio.onpause = () => setIsSpeaking(false)
@@ -100,9 +231,27 @@ export function HeroSection() {
     }
   }, [])
 
-  const createAudioFromApi = async () => {
+  const createAudioFromStatic = async (src: string, language: ChatLanguage) => {
+    const nextAudio = new Audio(src)
+    nextAudio.preload = 'auto'
+    nextAudio.onended = () => setIsSpeaking(false)
+    nextAudio.onpause = () => setIsSpeaking(false)
+    nextAudio.onplaying = () => {
+      setIsSpeaking(true)
+      setIsPreparingAudio(false)
+    }
+
+    audioRef.current = nextAudio
+    setActiveAudioLanguage(language)
+  }
+
+  const createAudioFromApi = async (language: ChatLanguage) => {
     const response = await fetch('/api/about-me-tts', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ language }),
     })
 
     if (!response.ok) {
@@ -125,7 +274,8 @@ export function HeroSection() {
     }
 
     audioRef.current = fallbackAudio
-    setUseApiFallback(true)
+    setUseApiFallback(language === 'en')
+    setActiveAudioLanguage(language)
   }
 
   const handleAboutMeAudio = async () => {
@@ -142,13 +292,33 @@ export function HeroSection() {
     setIsPreparingAudio(true)
 
     try {
-      if (useApiFallback) {
-        if (!audioRef.current.src || audioRef.current.src.endsWith(ABOUT_ME_AUDIO_SRC)) {
-          await createAudioFromApi()
+      if (chatLanguage === 'de') {
+        const shouldRefreshGermanAudio =
+          activeAudioLanguage !== 'de' ||
+          !audioRef.current.src ||
+          !audioRef.current.src.includes(ABOUT_ME_AUDIO_SRC_DE)
+
+        if (shouldRefreshGermanAudio) {
+          await createAudioFromStatic(ABOUT_ME_AUDIO_SRC_DE, 'de')
+        }
+
+        await audioRef.current.play()
+      } else if (useApiFallback) {
+        const shouldRefreshAudio =
+          activeAudioLanguage !== 'en' ||
+          !audioRef.current.src ||
+          audioRef.current.src.endsWith(ABOUT_ME_AUDIO_SRC)
+
+        if (shouldRefreshAudio) {
+          await createAudioFromApi('en')
         }
         await audioRef.current.play()
       } else {
+        if (!audioRef.current.src || !audioRef.current.src.includes(ABOUT_ME_AUDIO_SRC)) {
+          await createAudioFromStatic(ABOUT_ME_AUDIO_SRC, 'en')
+        }
         await audioRef.current.play()
+        setActiveAudioLanguage('en')
       }
 
       setIsSpeaking(true)
@@ -156,9 +326,21 @@ export function HeroSection() {
       const isNotSupportedError =
         error instanceof DOMException && error.name === 'NotSupportedError'
 
-      if (isNotSupportedError && !useApiFallback) {
+      if (chatLanguage === 'de') {
         try {
-          await createAudioFromApi()
+          await createAudioFromStatic(ABOUT_ME_AUDIO_SRC, 'en')
+          if (!audioRef.current) {
+            throw new Error('English fallback audio not available')
+          }
+          await audioRef.current.play()
+          setIsSpeaking(true)
+          return
+        } catch (fallbackError) {
+          console.error(fallbackError)
+        }
+      } else if (isNotSupportedError && !useApiFallback) {
+        try {
+          await createAudioFromApi('en')
           if (!audioRef.current) {
             throw new Error('Fallback audio not available')
           }
@@ -204,6 +386,7 @@ export function HeroSection() {
         },
         body: JSON.stringify({
           messages: nextMessages.map((m) => ({ role: m.role, text: m.text })),
+          language: chatLanguage,
         }),
       })
 
@@ -232,7 +415,7 @@ export function HeroSection() {
         {
           id: `bot-error-${Date.now()}`,
           role: 'assistant' as const,
-          text: `AI chat error: ${errorText}`,
+          text: `${chatText.errorPrefix}: ${errorText}`,
         },
       ])
     } finally {
@@ -260,7 +443,7 @@ export function HeroSection() {
     <section
       id="hero"
       ref={containerRef}
-      className="relative min-h-[78vh] flex items-start justify-center overflow-hidden pt-20 pb-6 md:pt-24 md:pb-8 lg:pt-28 lg:pb-10"
+      className="relative min-h-[142vh] flex items-start justify-center overflow-hidden pt-20 pb-24 md:pt-24 md:pb-28 lg:pt-28 lg:pb-32"
       style={{ position: 'relative' }}
     >
       {/* Floating gradient shapes */}
@@ -310,16 +493,16 @@ export function HeroSection() {
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
-          className="grid items-stretch gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:gap-14"
+          className="grid items-stretch gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:gap-10"
         >
           {/* Left side content */}
           <motion.div
             variants={fadeInUp}
             whileHover={{ y: -4 }}
-            className="relative h-full overflow-hidden rounded-3xl border border-[#dccbb9] bg-white backdrop-blur-xl shadow-[0_18px_60px_rgba(139,94,60,0.12)] px-6 py-5 md:px-8 md:py-7"
+            className="relative h-full overflow-hidden rounded-3xl border border-[#dccbb9] bg-gradient-to-br from-white to-[#fbf7f3] backdrop-blur-xl shadow-[0_18px_60px_rgba(139,94,60,0.12)] px-6 py-6 md:px-8 md:py-8"
           >
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(139,94,60,0.08),transparent_55%)]" />
-            <div className="relative space-y-5 text-center lg:text-left">
+            <div className="relative space-y-6 text-center lg:text-left">
               <motion.div variants={fadeInUp} className="overflow-hidden">
                 <motion.h1
                   className="text-5xl md:text-7xl lg:text-[5.5rem] font-bold text-foreground tracking-tight leading-[0.95]"
@@ -330,58 +513,15 @@ export function HeroSection() {
                 </motion.h1>
               </motion.div>
 
-              <motion.div
+              <motion.p
                 variants={fadeInUp}
-                className="flex flex-wrap items-center justify-center gap-4 lg:justify-start"
+                className="mx-auto max-w-2xl text-sm leading-relaxed text-muted-foreground lg:mx-0 md:text-base"
               >
-                <motion.button
-                  type="button"
-                  onClick={handleAboutMeAudio}
-                  whileHover={hoverScale}
-                  whileTap={tapScale}
-                  disabled={isPreparingAudio}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-[#8b5e3c] text-white rounded-full font-medium text-sm border border-[#8b5e3c] hover:bg-[#6f492f] transition-colors duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  {isPreparingAudio ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Loading Audio...
-                    </>
-                  ) : isSpeaking ? (
-                    <>
-                      <Pause className="w-4 h-4" />
-                      Stop About Me Audio
-                    </>
-                  ) : (
-                    <>
-                      <Volume2 className="w-4 h-4" />
-                      About Me
-                    </>
-                  )}
-                </motion.button>
+                {heroText.description}
+              </motion.p>
 
-                <motion.a
-                  href="/NEW_RESUME_2026.pdf"
-                  download
-                  whileHover={hoverScale}
-                  whileTap={tapScale}
-                  className="px-8 py-4 bg-[#8b5e3c] text-white rounded-full font-medium text-sm shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-shadow duration-300"
-                >
-                  Download Resume
-                </motion.a>
-
-                <motion.a
-                  href="#contact"
-                  whileHover={hoverScale}
-                  whileTap={tapScale}
-                  className="px-8 py-4 bg-[#8b5e3c] text-white rounded-full font-medium text-sm border border-[#8b5e3c] hover:bg-[#6f492f] transition-colors duration-300"
-                >
-                  Contact Me
-                </motion.a>
-              </motion.div>
-
-              <motion.div variants={fadeInUp} className="h-10 flex items-center justify-center lg:justify-start">
-                <span className="text-xl md:text-2xl text-primary font-medium">
+              <motion.div variants={fadeInUp} className="min-h-[36px] flex items-center justify-center lg:justify-start">
+                <span className="text-lg md:text-xl text-primary font-medium">
                   {displayText}
                   <motion.span
                     animate={{ opacity: [1, 0] }}
@@ -391,8 +531,68 @@ export function HeroSection() {
                 </span>
               </motion.div>
 
-              <motion.div variants={fadeInUp} className="pt-0">
-                <GithubHeatmap />
+              <motion.div
+                variants={fadeInUp}
+                className="flex flex-wrap items-center justify-center gap-3 lg:justify-start"
+              >
+                <motion.button
+                  type="button"
+                  onClick={handleAboutMeAudio}
+                  whileHover={hoverScale}
+                  whileTap={tapScale}
+                  disabled={isPreparingAudio}
+                  className="inline-flex items-center gap-2 rounded-full border border-[#cfb8a1] bg-white px-5 py-2.5 text-sm font-medium text-[#6f4e3a] transition-colors duration-300 hover:bg-[#f8f1ea] disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {isPreparingAudio ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      {heroText.loadingAudio}
+                    </>
+                  ) : isSpeaking ? (
+                    <>
+                      <Pause className="w-4 h-4" />
+                      {heroText.stopAudio}
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 className="w-4 h-4" />
+                      {heroText.aboutMe}
+                    </>
+                  )}
+                </motion.button>
+
+                <motion.a
+                  href="/NEW_RESUME_2026.pdf"
+                  download
+                  whileHover={hoverScale}
+                  whileTap={tapScale}
+                  className="inline-flex items-center gap-2 rounded-full bg-[#8b5e3c] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition-colors duration-300 hover:bg-[#704a30]"
+                >
+                  <FileDown className="h-4 w-4" />
+                  {heroText.downloadResume}
+                </motion.a>
+
+                <motion.a
+                  href="#contact"
+                  whileHover={hoverScale}
+                  whileTap={tapScale}
+                  className="rounded-full border border-[#cfb8a1] bg-white px-6 py-3 text-sm font-medium text-[#6f4e3a] transition-colors duration-300 hover:bg-[#f8f1ea]"
+                >
+                  {heroText.contactMe}
+                </motion.a>
+
+                <motion.a
+                  href="#projects"
+                  whileHover={hoverScale}
+                  whileTap={tapScale}
+                  className="inline-flex items-center px-2 py-2 text-sm font-medium text-[#8b5e3c] underline underline-offset-4"
+                >
+                  {heroText.seeProjects}
+                </motion.a>
+              </motion.div>
+
+              <motion.div variants={fadeInUp} className="pt-1">
+                <GithubHeatmap language={chatLanguage} />
               </motion.div>
             </div>
           </motion.div>
@@ -412,12 +612,14 @@ export function HeroSection() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-foreground">Varun AI Assistant</p>
-                    <p className="text-xs text-muted-foreground">Portfolio Guide</p>
+                    <p className="text-xs text-muted-foreground">{chatText.guide}</p>
                   </div>
                 </div>
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Online
+                <div className="flex items-center gap-2">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-[#f4e8dc] px-3 py-1 text-xs text-[#8b5e3c]">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {chatText.online}
+                  </div>
                 </div>
               </div>
 
@@ -443,10 +645,11 @@ export function HeroSection() {
 
                 {isBotTyping && (
                   <div className="flex justify-start">
-                    <div className="rounded-2xl rounded-bl-md px-4 py-3 bg-[#e9dfd3] text-[#4f392a] inline-flex items-center gap-1.5">
+                    <div className="rounded-2xl rounded-bl-md px-4 py-3 bg-[#e9dfd3] text-[#4f392a] inline-flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-primary/50 animate-pulse" />
                       <span className="w-2 h-2 rounded-full bg-primary/50 animate-pulse [animation-delay:120ms]" />
                       <span className="w-2 h-2 rounded-full bg-primary/50 animate-pulse [animation-delay:240ms]" />
+                      <span className="text-xs">{chatText.thinking}</span>
                     </div>
                   </div>
                 )}
@@ -454,7 +657,7 @@ export function HeroSection() {
 
               <div className="relative border-t border-[#dccbb9] px-4 py-3 bg-transparent">
                 <div className="mb-3 flex flex-wrap gap-2">
-                  {['What can Varun build?', 'Tech stack?', 'Internship impact?'].map((q) => (
+                  {chatText.quickPrompts.map((q) => (
                     <button
                       key={q}
                       type="button"
@@ -476,7 +679,7 @@ export function HeroSection() {
                   <input
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
-                    placeholder="Ask about projects, stack, achievements..."
+                    placeholder={chatText.placeholder}
                     className="w-full rounded-xl border border-[#dccbb9] bg-white px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/25"
                   />
                   <button

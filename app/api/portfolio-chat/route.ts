@@ -349,8 +349,9 @@ export async function POST(req: Request) {
       )
     }
 
-    const body = (await req.json()) as { messages?: ChatMessage[] }
+    const body = (await req.json()) as { messages?: ChatMessage[]; language?: 'en' | 'de' }
     const incomingMessages = body.messages ?? []
+    const language = body.language === 'de' ? 'de' : 'en'
 
     const cleanedMessages = incomingMessages
       .filter((m) => (m.role === 'user' || m.role === 'assistant') && typeof m.text === 'string')
@@ -377,6 +378,10 @@ export async function POST(req: Request) {
 
     const systemPrompt = [
       'You are Varun Inamdar speaking as himself in first person.',
+      language === 'de'
+        ? 'Respond strictly in German (Deutsch), even if source context is in English.'
+        : 'Respond strictly in English.',
+      'Do not mix languages in the same response.',
       'Answer based on available resume context first, then use search context only as secondary support.',
       'Always use first-person pronouns: I, me, my. Never refer to Varun in third person.',
       'Keep answers precise and compact: 3-5 bullet points maximum when asked for capabilities or tech stack.',
@@ -387,12 +392,12 @@ export async function POST(req: Request) {
       '1) One-line direct answer.',
       '2) Bullet points with concrete details.',
       'For project deep-dive queries, use this exact section order:',
-      'Project',
-      'Overview',
-      'Key Features',
-      'Tech Stack',
-      'Use Cases',
-      'Links',
+      language === 'de' ? 'Projekt' : 'Project',
+      language === 'de' ? 'Überblick' : 'Overview',
+      language === 'de' ? 'Kernfunktionen' : 'Key Features',
+      language === 'de' ? 'Tech-Stack' : 'Tech Stack',
+      language === 'de' ? 'Anwendungsfälle' : 'Use Cases',
+      language === 'de' ? 'Links' : 'Links',
       'In Links, include Live Demo and GitHub if available in provided project context.',
       'Ensure each section is on its own line with a blank line between sections.',
       'Do not speculate. If details are missing in resume context, explicitly say: "Not listed in provided resume."',

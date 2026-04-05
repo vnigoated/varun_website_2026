@@ -10,6 +10,49 @@ import type { Activity } from 'react-activity-calendar'
 
 import { githubConfig } from '@/config/Github'
 
+type HeatmapLanguage = 'en' | 'de'
+
+const heatmapI18n: Record<
+  HeatmapLanguage,
+  {
+    title: string
+    subtitle: string
+    totalCountTemplate: string
+    less: string
+    more: string
+    thisYear: string
+    viewOnGithub: string
+    errorTitle: string
+    errorDescription: string
+    errorButton: string
+  }
+> = {
+  en: {
+    title: 'GitHub Activity',
+    subtitle: 'coding journey going in 2026',
+    totalCountTemplate: '{{count}} contributions in {{year}}',
+    less: 'Less',
+    more: 'More',
+    thisYear: '{{count}} contributions this year',
+    viewOnGithub: 'View on GitHub',
+    errorTitle: githubConfig.errorState.title,
+    errorDescription: githubConfig.errorState.description,
+    errorButton: githubConfig.errorState.buttonText,
+  },
+  de: {
+    title: 'GitHub-Aktivität',
+    subtitle: 'Coding-Reise im Jahr 2026',
+    totalCountTemplate: '{{count}} Beiträge in {{year}}',
+    less: 'Weniger',
+    more: 'Mehr',
+    thisYear: '{{count}} Beiträge in diesem Jahr',
+    viewOnGithub: 'Auf GitHub ansehen',
+    errorTitle: 'GitHub-Beiträge konnten nicht geladen werden',
+    errorDescription: 'Schau dir mein Profil direkt an, um die neuesten Aktivitäten zu sehen.',
+    errorButton: 'Auf GitHub ansehen',
+  },
+}
+
 const ActivityCalendar = dynamic(
   () => import('react-activity-calendar').then((module) => module.ActivityCalendar),
   {
@@ -71,8 +114,9 @@ function HeatmapLoadingState() {
   )
 }
 
-function HeatmapErrorState({ message }: { message: string }) {
+function HeatmapErrorState({ message, language }: { message: string; language: HeatmapLanguage }) {
   const profileUrl = `https://github.com/${githubConfig.username}`
+  const text = heatmapI18n[language]
 
   return (
     <div className="rounded-3xl border border-[#dccbb9] bg-white p-3 shadow-[0_18px_60px_rgba(139,94,60,0.08)]">
@@ -81,15 +125,15 @@ function HeatmapErrorState({ message }: { message: string }) {
           <AlertCircle className="h-5 w-5" />
         </div>
         <div className="space-y-2">
-          <h3 className="text-base font-semibold text-foreground">{githubConfig.errorState.title}</h3>
-          <p className="text-sm text-muted-foreground">{message || githubConfig.errorState.description}</p>
+          <h3 className="text-base font-semibold text-foreground">{text.errorTitle}</h3>
+          <p className="text-sm text-muted-foreground">{message || text.errorDescription}</p>
           <Link
             href={profileUrl}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-2 rounded-full bg-[#8b5e3c] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#6f492f]"
           >
-            {githubConfig.errorState.buttonText}
+            {text.errorButton}
             <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
@@ -173,7 +217,7 @@ function buildYearActivities(contributions: ApiContribution[], year: number) {
   return filledActivities
 }
 
-export function GithubHeatmap() {
+export function GithubHeatmap({ language = 'en' }: { language?: HeatmapLanguage }) {
   const { resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -183,6 +227,7 @@ export function GithubHeatmap() {
 
   const currentYear = new Date().getFullYear()
   const colorScheme = resolvedTheme === 'dark' ? 'dark' : 'light'
+  const text = heatmapI18n[language]
 
   useEffect(() => {
     setMounted(true)
@@ -235,10 +280,15 @@ export function GithubHeatmap() {
     () => ({
       months: githubConfig.labels.months,
       weekdays: githubConfig.labels.weekdays,
-      totalCount: githubConfig.labels.totalCount.replace('{{count}}', String(totalContributions)).replace('{{year}}', String(currentYear)),
-      legend: githubConfig.labels.legend,
+      totalCount: text.totalCountTemplate
+        .replace('{{count}}', String(totalContributions))
+        .replace('{{year}}', String(currentYear)),
+      legend: {
+        less: text.less,
+        more: text.more,
+      },
     }),
-    [currentYear, totalContributions]
+    [currentYear, totalContributions, text]
   )
 
   if (!mounted || loading) {
@@ -246,15 +296,15 @@ export function GithubHeatmap() {
   }
 
   if (error) {
-    return <HeatmapErrorState message={error} />
+    return <HeatmapErrorState message={error} language={language} />
   }
 
   return (
     <section className="rounded-3xl border border-[#dccbb9] bg-white p-3 shadow-[0_18px_60px_rgba(139,94,60,0.08)] md:p-4">
       <div className="mb-2 flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-xl font-semibold text-foreground">{githubConfig.title}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">{githubConfig.subtitle}</p>
+          <h3 className="text-xl font-semibold text-foreground">{text.title}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">{text.subtitle}</p>
         </div>
 
         <div className="inline-flex items-center gap-2 rounded-full bg-[#f3e8dd] px-3 py-1.5 text-xs font-medium text-[#7a5a45]">
@@ -281,7 +331,7 @@ export function GithubHeatmap() {
       </div>
 
       <div className="mt-2 flex items-center justify-between gap-3 text-sm text-muted-foreground">
-        <span>{totalContributions} contributions this year</span>
+        <span>{text.thisYear.replace('{{count}}', String(totalContributions))}</span>
         <Link
           href={`https://github.com/${githubConfig.username}`}
           target="_blank"
@@ -289,7 +339,7 @@ export function GithubHeatmap() {
           className="inline-flex items-center gap-2 rounded-full bg-[#8b5e3c] px-4 py-2 font-medium text-white transition-colors hover:bg-[#6f492f]"
         >
           <Github className="h-4 w-4" />
-          View on GitHub
+          {text.viewOnGithub}
           <ArrowUpRight className="h-4 w-4" />
         </Link>
       </div>

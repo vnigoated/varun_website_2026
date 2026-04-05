@@ -5,17 +5,43 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const navLinks = [
-  { name: 'Experience', href: '#experience' },
-  { name: 'Projects', href: '#projects' },
-  { name: 'Skills', href: '#skills' },
-  { name: 'Achievements', href: '#achievements' },
-  { name: 'Contact', href: '#contact' },
-]
+type ChatLanguage = 'en' | 'de'
+
+const LANGUAGE_STORAGE_KEY = 'portfolio-language'
+const LANGUAGE_CHANGE_EVENT = 'portfolio-language-change'
+
+const navLabels: Record<ChatLanguage, Array<{ name: string; href: string }>> = {
+  en: [
+    { name: 'Experience', href: '#experience' },
+    { name: 'Projects', href: '#projects' },
+    { name: 'Skills', href: '#skills' },
+    { name: 'Achievements', href: '#achievements' },
+    { name: 'Contact', href: '#contact' },
+  ],
+  de: [
+    { name: 'Erfahrung', href: '#experience' },
+    { name: 'Projekte', href: '#projects' },
+    { name: 'Fähigkeiten', href: '#skills' },
+    { name: 'Auszeichnungen', href: '#achievements' },
+    { name: 'Kontakt', href: '#contact' },
+  ],
+}
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [navbarLanguage, setNavbarLanguage] = useState<ChatLanguage>('en')
+  const navLinks = navLabels[navbarLanguage]
+
+  const setLanguage = (language: ChatLanguage) => {
+    if (language === navbarLanguage) {
+      return
+    }
+
+    setNavbarLanguage(language)
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language)
+    window.dispatchEvent(new CustomEvent(LANGUAGE_CHANGE_EVENT, { detail: { language } }))
+  }
 
   const handleNavClick = (href: string) => {
     if (href === '#') return
@@ -32,8 +58,26 @@ export function Navbar() {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50)
     }
+
+    const savedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY)
+    if (savedLanguage === 'en' || savedLanguage === 'de') {
+      setNavbarLanguage(savedLanguage)
+    }
+
+    const handleLanguageEvent = (event: Event) => {
+      const customEvent = event as CustomEvent<{ language?: ChatLanguage }>
+      const nextLanguage = customEvent.detail?.language
+      if (nextLanguage === 'en' || nextLanguage === 'de') {
+        setNavbarLanguage(nextLanguage)
+      }
+    }
+
     window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
+    window.addEventListener(LANGUAGE_CHANGE_EVENT, handleLanguageEvent as EventListener)
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      window.removeEventListener(LANGUAGE_CHANGE_EVENT, handleLanguageEvent as EventListener)
+    }
   }, [])
 
   return (
@@ -80,6 +124,28 @@ export function Navbar() {
           ))}
         </ul>
 
+        {/* Desktop Language Toggle */}
+        <div className="hidden md:inline-flex items-center rounded-full border border-[#dccbb9] bg-white p-1 text-sm shadow-sm">
+          <button
+            type="button"
+            onClick={() => setLanguage('en')}
+            className={`rounded-full px-3 py-1 transition-colors ${
+              navbarLanguage === 'en' ? 'bg-[#8b5e3c] text-white' : 'text-[#8b5e3c]'
+            }`}
+          >
+            EN
+          </button>
+          <button
+            type="button"
+            onClick={() => setLanguage('de')}
+            className={`rounded-full px-3 py-1 transition-colors ${
+              navbarLanguage === 'de' ? 'bg-[#8b5e3c] text-white' : 'text-[#8b5e3c]'
+            }`}
+          >
+            DE
+          </button>
+        </div>
+
         {/* Mobile Menu Button */}
         <motion.button
           whileHover={{ scale: 1.1 }}
@@ -102,6 +168,28 @@ export function Navbar() {
             className="md:hidden glass"
           >
             <ul className="container mx-auto px-6 py-4 flex flex-col gap-4">
+              <li>
+                <div className="inline-flex items-center rounded-full border border-[#dccbb9] bg-white p-1 text-sm shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => setLanguage('en')}
+                    className={`rounded-full px-3 py-1 transition-colors ${
+                      navbarLanguage === 'en' ? 'bg-[#8b5e3c] text-white' : 'text-[#8b5e3c]'
+                    }`}
+                  >
+                    EN
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLanguage('de')}
+                    className={`rounded-full px-3 py-1 transition-colors ${
+                      navbarLanguage === 'de' ? 'bg-[#8b5e3c] text-white' : 'text-[#8b5e3c]'
+                    }`}
+                  >
+                    DE
+                  </button>
+                </div>
+              </li>
               {navLinks.map((link, index) => (
                 <motion.li
                   key={link.name}
